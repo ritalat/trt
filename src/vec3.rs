@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Div, Neg};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -12,18 +12,14 @@ pub type Point = Vec3;
 
 impl Vec3 {
     pub fn from(x: f64, y: f64, z: f64) -> Vec3 {
-        Vec3 {
-            x: x,
-            y: y,
-            z: z,
-        }
+        Vec3 { x, y, z }
     }
 
-    pub fn lenght(&self) -> f64 {
-        self.lenght_squared().sqrt()
+    pub fn length(&self) -> f64 {
+        self.length_squared().sqrt()
     }
 
-    pub fn lenght_squared(&self) -> f64 {
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 }
@@ -41,7 +37,7 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
 }
 
 pub fn unit_vector(v: Vec3) -> Vec3 {
-    v / v.lenght()
+    v / v.length()
 }
 
 impl Add for Vec3 {
@@ -94,6 +90,7 @@ impl Mul<f64> for Vec3 {
 
 impl Mul<Vec3> for f64 {
     type Output = Vec3;
+
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self * other.x,

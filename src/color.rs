@@ -1,7 +1,7 @@
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufWriter;
-use std::fs::File;
 
 use crate::vec3::Color;
 
@@ -11,6 +11,6 @@ pub fn write_color(writer: &mut BufWriter<File>, color: &Color) -> io::Result<()
     let ib = (255.999 * color.z) as i32;
 
     let tmp = format!("{ir} {ig} {ib}\n");
-    writer.write(tmp.as_bytes())?;
+    writer.write_all(tmp.as_bytes())?;
     Ok(())
 }
