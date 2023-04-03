@@ -4,35 +4,36 @@ use std::io::prelude::*;
 use std::io::BufWriter;
 
 use crate::color::write_color;
+use crate::hittable::Hittable;
 use crate::ray::Ray;
+use crate::sphere::Sphere;
 use crate::vec3::{Color, Point, Vec3};
 
 mod color;
+mod hittable;
 mod ray;
+mod sphere;
 mod vec3;
 
-fn hit_sphere(center: &Point, radius: f64, r: &Ray) -> f64 {
-    let oc = r.orig - *center;
-    let a = r.dir.length_squared();
-    let half_b = vec3::dot(&oc, &r.dir);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-half_b - discriminant.sqrt()) / a
-    }
-}
+fn ray_color(r: &Ray, objects: &mut Vec<Box<dyn Hittable>>) -> Color {
+    let mut closest_hit = f64::INFINITY;
+    let mut record = None;
 
-fn ray_color(r: &Ray) -> Color {
-    let mut t = hit_sphere(&Point::from(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let n = vec3::unit_vector(r.at(t) - Vec3::from(0.0, 0.0, -1.0));
-        return 0.5 * Color::from(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+    for object in objects {
+        if let Some(rec) = object.hit(r, 0.0, closest_hit) {
+            closest_hit = rec.t;
+            record = Some(rec);
+        }
     }
-    let unit_direction = vec3::unit_vector(r.dir);
-    t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Color::from(1.0, 1.0, 1.0) + t * Color::from(0.5, 0.7, 1.0)
+
+    match record {
+        Some(rec) => 0.5 * (rec.normal + Color::from(1.0, 1.0, 1.0)),
+        None => {
+            let unit_direction = vec3::unit_vector(r.dir);
+            let t = 0.5 * (unit_direction.y + 1.0);
+            (1.0 - t) * Color::from(1.0, 1.0, 1.0) + t * Color::from(0.5, 0.7, 1.0)
+        }
+    }
 }
 
 fn main() -> io::Result<()> {
@@ -40,6 +41,14 @@ fn main() -> io::Result<()> {
     let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
+
+    // World
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+    objects.push(Box::new(Sphere::from(Point::from(0.0, 0.0, -1.0), 0.5)));
+    objects.push(Box::new(Sphere::from(
+        Point::from(0.0, -100.5, -1.0),
+        100.0,
+    )));
 
     // Camera
     let viewport_height = 2.0;
@@ -68,7 +77,7 @@ fn main() -> io::Result<()> {
                 origin,
                 lower_left_corner + u * horizontal + v * vertical - origin,
             );
-            let color = ray_color(&r);
+            let color = ray_color(&r, &mut objects);
             write_color(&mut writer, &color)?;
         }
     }
