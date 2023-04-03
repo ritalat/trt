@@ -15,7 +15,7 @@ impl Camera {
         let viewport_width = aspect_ratio * viewport_height;
         let focal_length = 1.0;
 
-        let origin = Point::from(0.0, 0.0, 0.0);
+        let origin = Point::new();
         let horizontal = Vec3::from(viewport_width, 0.0, 0.0);
         let vertical = Vec3::from(0.0, viewport_height, 0.0);
         let lower_left_corner =
