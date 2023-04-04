@@ -1,4 +1,5 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use rand::prelude::*;
+use std::ops::{Add, Div, Mul, Neg, Range, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -21,6 +22,41 @@ impl Vec3 {
 
     pub fn from(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
+    }
+
+    pub fn random() -> Self {
+        Vec3::from(random(), random(), random())
+    }
+
+    pub fn random_range(r: Range<f64>) -> Self {
+        let mut rng = thread_rng();
+        Vec3::from(
+            rng.gen_range(r.clone()),
+            rng.gen_range(r.clone()),
+            rng.gen_range(r),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let v = Vec3::random_range(-1.0..1.0);
+            if v.length_squared() < 1.0 {
+                return v;
+            }
+        }
+    }
+
+    pub fn random_unit_vector() -> Self {
+        unit_vector(Self::random_in_unit_sphere())
+    }
+
+    pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+        let in_unit_sphere = Self::random_in_unit_sphere();
+        if dot(&in_unit_sphere, &normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
     }
 
     pub fn length(&self) -> f64 {
