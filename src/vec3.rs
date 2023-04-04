@@ -52,6 +52,7 @@ impl Vec3 {
 
     pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
         let in_unit_sphere = Self::random_in_unit_sphere();
+        // In the same hemisphere as the normal
         if dot(&in_unit_sphere, &normal) > 0.0 {
             in_unit_sphere
         } else {
@@ -66,6 +67,12 @@ impl Vec3 {
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
+
+    pub fn near_zero(&self) -> bool {
+        // Return true if the vector is close to zero in all dimensions
+        let s = 1.0e-8;
+        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
+    }
 }
 
 pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
@@ -78,6 +85,10 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
         y: u.z * v.x - u.x * v.z,
         z: u.x * v.y - u.y * v.x,
     }
+}
+
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - 2.0 * dot(&v, &n) * n
 }
 
 pub fn unit_vector(v: Vec3) -> Vec3 {

@@ -3,22 +3,26 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufWriter;
+use std::rc::Rc;
 
 use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
+use crate::material::{Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec3::{Color, Point, Vec3};
+use crate::vec3::{Color, Point};
 
 mod camera;
 mod color;
 mod hittable;
+mod material;
 mod ray;
 mod sphere;
 mod vec3;
 
 fn ray_color(r: &Ray, objects: &mut Vec<Box<dyn Hittable>>, depth: i32) -> Color {
+    // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
         return Color::new();
     }
@@ -34,10 +38,12 @@ fn ray_color(r: &Ray, objects: &mut Vec<Box<dyn Hittable>>, depth: i32) -> Color
     }
 
     match record {
-        Some(rec) => {
-            let target = rec.p + rec.normal + Vec3::random_unit_vector();
-            0.5 * ray_color(&Ray::from(rec.p, target - rec.p), objects, depth - 1)
-        }
+        Some(rec) => match rec.mat.scatter(r, &rec) {
+            Some((attenuation, scattered)) => {
+                attenuation * ray_color(&scattered, objects, depth - 1)
+            }
+            None => Color::new(),
+        },
         None => {
             let unit_direction = vec3::unit_vector(r.dir);
             let t = 0.5 * (unit_direction.y + 1.0);
@@ -56,10 +62,31 @@ fn main() -> io::Result<()> {
 
     // World
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
-    objects.push(Box::new(Sphere::from(Point::from(0.0, 0.0, -1.0), 0.5)));
+
+    let material_ground = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::from(Color::from(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::from(Color::from(0.8, 0.8, 0.8), 0.3));
+    let material_right = Rc::new(Metal::from(Color::from(0.8, 0.6, 0.2), 1.0));
+
     objects.push(Box::new(Sphere::from(
         Point::from(0.0, -100.5, -1.0),
         100.0,
+        material_ground,
+    )));
+    objects.push(Box::new(Sphere::from(
+        Point::from(0.0, 0.0, -1.0),
+        0.5,
+        material_center,
+    )));
+    objects.push(Box::new(Sphere::from(
+        Point::from(-1.0, -0.0, -1.0),
+        0.5,
+        material_left,
+    )));
+    objects.push(Box::new(Sphere::from(
+        Point::from(1.0, 0.0, -1.0),
+        0.5,
+        material_right,
     )));
 
     let camera = Camera::new();
