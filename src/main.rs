@@ -8,7 +8,7 @@ use std::rc::Rc;
 use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
-use crate::material::{Lambertian, Metal};
+use crate::material::{Dielectric, Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::{Color, Point};
@@ -64,9 +64,9 @@ fn main() -> io::Result<()> {
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     let material_ground = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::from(Color::from(0.7, 0.3, 0.3)));
-    let material_left = Rc::new(Metal::from(Color::from(0.8, 0.8, 0.8), 0.3));
-    let material_right = Rc::new(Metal::from(Color::from(0.8, 0.6, 0.2), 1.0));
+    let material_center = Rc::new(Lambertian::from(Color::from(0.1, 0.2, 0.5)));
+    let material_left = Rc::new(Dielectric::from(1.5));
+    let material_right = Rc::new(Metal::from(Color::from(0.8, 0.6, 0.2), 0.0));
 
     objects.push(Box::new(Sphere::from(
         Point::from(0.0, -100.5, -1.0),
@@ -81,6 +81,11 @@ fn main() -> io::Result<()> {
     objects.push(Box::new(Sphere::from(
         Point::from(-1.0, -0.0, -1.0),
         0.5,
+        material_left.clone(),
+    )));
+    objects.push(Box::new(Sphere::from(
+        Point::from(-1.0, -0.0, -1.0),
+        -0.4,
         material_left,
     )));
     objects.push(Box::new(Sphere::from(

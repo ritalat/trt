@@ -1,3 +1,5 @@
+use rand::prelude::*;
+
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
 use crate::vec3::{self, Color, Vec3};
@@ -68,5 +70,51 @@ impl Material for Metal {
             true => Some((attenuation, scattered)),
             false => None,
         }
+    }
+}
+
+pub struct Dielectric {
+    pub ir: f64, // Index of Refraction
+}
+
+impl Dielectric {
+    pub fn new() -> Self {
+        Dielectric { ir: 1.5 } // Glass
+    }
+
+    pub fn from(ir: f64) -> Self {
+        Dielectric { ir }
+    }
+
+    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        // Use Schlick's approximation for reflectance
+        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+        let attenuation = Color::from(1.0, 1.0, 1.0);
+        let refraction_ratio = match rec.front_face {
+            true => 1.0 / self.ir,
+            false => self.ir,
+        };
+
+        let unit_direction = vec3::unit_vector(r.dir);
+        let cos_theta = vec3::dot(&-unit_direction, &rec.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+        let direction =
+            if cannot_refract || Self::reflectance(cos_theta, refraction_ratio) > random() {
+                vec3::reflect(unit_direction, rec.normal)
+            } else {
+                vec3::refract(unit_direction, rec.normal, refraction_ratio)
+            };
+
+        let scattered = Ray::from(rec.p, direction);
+        Some((attenuation, scattered))
     }
 }
