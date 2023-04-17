@@ -11,7 +11,7 @@ use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec3::{Color, Point};
+use crate::vec3::{Color, Point, Vec3};
 
 mod camera;
 mod color;
@@ -79,13 +79,13 @@ fn main() -> io::Result<()> {
         material_center,
     )));
     objects.push(Box::new(Sphere::from(
-        Point::from(-1.0, -0.0, -1.0),
+        Point::from(-1.0, 0.0, -1.0),
         0.5,
         material_left.clone(),
     )));
     objects.push(Box::new(Sphere::from(
-        Point::from(-1.0, -0.0, -1.0),
-        -0.4,
+        Point::from(-1.0, 0.0, -1.0),
+        -0.45,
         material_left,
     )));
     objects.push(Box::new(Sphere::from(
@@ -94,7 +94,13 @@ fn main() -> io::Result<()> {
         material_right,
     )));
 
-    let camera = Camera::new();
+    let camera = Camera::from(
+        Point::from(-2.0, 2.0, 1.0),
+        Point::from(0.0, 0.0, -1.0),
+        Vec3::from(0.0, 1.0, 0.0),
+        20.0,
+        aspect_ratio,
+    );
 
     // Render
     let f = File::create("img.ppm")?;
