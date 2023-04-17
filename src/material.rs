@@ -13,12 +13,14 @@ pub struct Lambertian {
 }
 
 impl Lambertian {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Lambertian {
             albedo: Color::new(),
         }
     }
 
+    #[allow(dead_code)]
     pub fn from(albedo: Color) -> Self {
         Lambertian { albedo }
     }
@@ -42,6 +44,7 @@ pub struct Metal {
 }
 
 impl Metal {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Metal {
             albedo: Color::new(),
@@ -49,6 +52,7 @@ impl Metal {
         }
     }
 
+    #[allow(dead_code)]
     pub fn from(albedo: Color, fuzz: f64) -> Self {
         Metal {
             albedo,
@@ -78,10 +82,12 @@ pub struct Dielectric {
 }
 
 impl Dielectric {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Dielectric { ir: 1.5 } // Glass
     }
 
+    #[allow(dead_code)]
     pub fn from(ir: f64) -> Self {
         Dielectric { ir }
     }
