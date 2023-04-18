@@ -21,6 +21,71 @@ mod ray;
 mod sphere;
 mod vec3;
 
+fn random_scene() -> Vec<Box<dyn Hittable>> {
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut rng = thread_rng();
+
+    let ground_material = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
+    objects.push(Box::new(Sphere::from(
+        Point::from(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random::<f64>();
+            let center = Point::from(
+                a as f64 + 0.9 * random::<f64>(),
+                0.2,
+                b as f64 + 0.9 * random::<f64>(),
+            );
+
+            if (center - Point::from(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    // Diffuse
+                    let albedo = Color::random() * Color::random();
+                    let sphere_material = Rc::new(Lambertian::from(albedo));
+                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                } else if choose_mat < 0.95 {
+                    // Metal
+                    let albedo = Color::random_range(0.5..1.0);
+                    let fuzz = rng.gen_range(0.0..0.5);
+                    let sphere_material = Rc::new(Metal::from(albedo, fuzz));
+                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                } else {
+                    // Glass
+                    let sphere_material = Rc::new(Dielectric::from(1.5));
+                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                }
+            }
+        }
+    }
+
+    let material1 = Rc::new(Dielectric::from(1.5));
+    objects.push(Box::new(Sphere::from(
+        Point::from(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+
+    let material2 = Rc::new(Lambertian::from(Color::from(0.4, 0.2, 0.1)));
+    objects.push(Box::new(Sphere::from(
+        Point::from(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+
+    let material3 = Rc::new(Metal::from(Color::from(0.7, 0.6, 0.5), 0.0));
+    objects.push(Box::new(Sphere::from(
+        Point::from(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+
+    objects
+}
+
 fn ray_color(r: &Ray, objects: &mut Vec<Box<dyn Hittable>>, depth: i32) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
@@ -61,44 +126,13 @@ fn main() -> io::Result<()> {
     let max_depth = 50;
 
     // World
-    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut objects = random_scene();
 
-    let material_ground = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::from(Color::from(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(Dielectric::from(1.5));
-    let material_right = Rc::new(Metal::from(Color::from(0.8, 0.6, 0.2), 0.0));
-
-    objects.push(Box::new(Sphere::from(
-        Point::from(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    objects.push(Box::new(Sphere::from(
-        Point::from(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-    objects.push(Box::new(Sphere::from(
-        Point::from(-1.0, 0.0, -1.0),
-        0.5,
-        material_left.clone(),
-    )));
-    objects.push(Box::new(Sphere::from(
-        Point::from(-1.0, 0.0, -1.0),
-        -0.45,
-        material_left,
-    )));
-    objects.push(Box::new(Sphere::from(
-        Point::from(1.0, 0.0, -1.0),
-        0.5,
-        material_right,
-    )));
-
-    let lookfrom = Point::from(3.0, 3.0, 2.0);
-    let lookat = Point::from(0.0, 0.0, -1.0);
+    let lookfrom = Point::from(13.0, 2.0, 3.0);
+    let lookat = Point::from(0.0, 0.0, 0.0);
     let vup = Vec3::from(0.0, 1.0, 0.0);
-    let dist_to_focus = (lookfrom - lookat).length();
-    let aperture = 2.0;
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
 
     let camera = Camera::from(
         lookfrom,
