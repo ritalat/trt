@@ -94,12 +94,20 @@ fn main() -> io::Result<()> {
         material_right,
     )));
 
+    let lookfrom = Point::from(3.0, 3.0, 2.0);
+    let lookat = Point::from(0.0, 0.0, -1.0);
+    let vup = Vec3::from(0.0, 1.0, 0.0);
+    let dist_to_focus = (lookfrom - lookat).length();
+    let aperture = 2.0;
+
     let camera = Camera::from(
-        Point::from(-2.0, 2.0, 1.0),
-        Point::from(0.0, 0.0, -1.0),
-        Vec3::from(0.0, 1.0, 0.0),
+        lookfrom,
+        lookat,
+        vup,
         20.0,
         aspect_ratio,
+        aperture,
+        dist_to_focus,
     );
 
     // Render

@@ -13,7 +13,7 @@ pub type Point = Vec3;
 
 impl Vec3 {
     pub fn new() -> Self {
-        Vec3 {
+        Self {
             x: 0.0,
             y: 0.0,
             z: 0.0,
@@ -21,16 +21,16 @@ impl Vec3 {
     }
 
     pub fn from(x: f64, y: f64, z: f64) -> Self {
-        Vec3 { x, y, z }
+        Self { x, y, z }
     }
 
     pub fn random() -> Self {
-        Vec3::from(random(), random(), random())
+        Self::from(random(), random(), random())
     }
 
     pub fn random_range(r: Range<f64>) -> Self {
         let mut rng = thread_rng();
-        Vec3::from(
+        Self::from(
             rng.gen_range(r.clone()),
             rng.gen_range(r.clone()),
             rng.gen_range(r),
@@ -39,7 +39,7 @@ impl Vec3 {
 
     pub fn random_in_unit_sphere() -> Self {
         loop {
-            let v = Vec3::random_range(-1.0..1.0);
+            let v = Self::random_range(-1.0..1.0);
             if v.length_squared() < 1.0 {
                 return v;
             }
@@ -50,13 +50,23 @@ impl Vec3 {
         unit_vector(Self::random_in_unit_sphere())
     }
 
-    pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+    pub fn random_in_hemisphere(normal: Self) -> Self {
         let in_unit_sphere = Self::random_in_unit_sphere();
         // In the same hemisphere as the normal
         if dot(&in_unit_sphere, &normal) > 0.0 {
             in_unit_sphere
         } else {
             -in_unit_sphere
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Self {
+        let mut rng = thread_rng();
+        loop {
+            let p = Self::from(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 
