@@ -9,6 +9,7 @@ use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
 use crate::material::{Dielectric, Lambertian, Metal};
+use crate::moving_sphere::MovingSphere;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::{Color, Point, Vec3};
@@ -17,6 +18,7 @@ mod camera;
 mod color;
 mod hittable;
 mod material;
+mod moving_sphere;
 mod ray;
 mod sphere;
 mod vec3;
@@ -46,7 +48,15 @@ fn random_scene() -> Vec<Box<dyn Hittable>> {
                     // Diffuse
                     let albedo = Color::random() * Color::random();
                     let sphere_material = Rc::new(Lambertian::from(albedo));
-                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                    let center2 = center + Vec3::from(0.0, rng.gen_range(0.0..0.5), 0.0);
+                    objects.push(Box::new(MovingSphere::from(
+                        center,
+                        center2,
+                        0.0,
+                        1.0,
+                        0.2,
+                        sphere_material,
+                    )));
                 } else if choose_mat < 0.95 {
                     // Metal
                     let albedo = Color::random_range(0.5..1.0);
@@ -142,6 +152,8 @@ fn main() -> io::Result<()> {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        0.0,
+        1.0,
     );
 
     // Render
