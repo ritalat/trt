@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::ops::{Add, Div, Mul, Neg, Range, Sub};
+use std::ops::{Add, Div, Index, Mul, Neg, Range, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -194,6 +194,19 @@ impl Neg for Vec3 {
             x: -self.x,
             y: -self.y,
             z: -self.z,
+        }
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, i: usize) -> &Self::Output {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Vec3 index out of bounds: i was {}", i),
         }
     }
 }

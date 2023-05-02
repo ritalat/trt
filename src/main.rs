@@ -8,27 +8,31 @@ use std::rc::Rc;
 use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
+use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::moving_sphere::MovingSphere;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::{Color, Point, Vec3};
 
+mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hittable;
+mod hittable_list;
 mod material;
 mod moving_sphere;
 mod ray;
 mod sphere;
 mod vec3;
 
-fn random_scene() -> Vec<Box<dyn Hittable>> {
-    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+fn random_scene() -> HittableList {
+    let mut objects = HittableList::new();
     let mut rng = thread_rng();
 
     let ground_material = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
-    objects.push(Box::new(Sphere::from(
+    objects.push(Rc::new(Sphere::from(
         Point::from(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -49,7 +53,7 @@ fn random_scene() -> Vec<Box<dyn Hittable>> {
                     let albedo = Color::random() * Color::random();
                     let sphere_material = Rc::new(Lambertian::from(albedo));
                     let center2 = center + Vec3::from(0.0, rng.gen_range(0.0..0.5), 0.0);
-                    objects.push(Box::new(MovingSphere::from(
+                    objects.push(Rc::new(MovingSphere::from(
                         center,
                         center2,
                         0.0,
@@ -62,32 +66,32 @@ fn random_scene() -> Vec<Box<dyn Hittable>> {
                     let albedo = Color::random_range(0.5..1.0);
                     let fuzz = rng.gen_range(0.0..0.5);
                     let sphere_material = Rc::new(Metal::from(albedo, fuzz));
-                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                    objects.push(Rc::new(Sphere::from(center, 0.2, sphere_material)));
                 } else {
                     // Glass
                     let sphere_material = Rc::new(Dielectric::from(1.5));
-                    objects.push(Box::new(Sphere::from(center, 0.2, sphere_material)));
+                    objects.push(Rc::new(Sphere::from(center, 0.2, sphere_material)));
                 }
             }
         }
     }
 
     let material1 = Rc::new(Dielectric::from(1.5));
-    objects.push(Box::new(Sphere::from(
+    objects.push(Rc::new(Sphere::from(
         Point::from(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
 
     let material2 = Rc::new(Lambertian::from(Color::from(0.4, 0.2, 0.1)));
-    objects.push(Box::new(Sphere::from(
+    objects.push(Rc::new(Sphere::from(
         Point::from(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
 
     let material3 = Rc::new(Metal::from(Color::from(0.7, 0.6, 0.5), 0.0));
-    objects.push(Box::new(Sphere::from(
+    objects.push(Rc::new(Sphere::from(
         Point::from(4.0, 1.0, 0.0),
         1.0,
         material3,
@@ -96,21 +100,13 @@ fn random_scene() -> Vec<Box<dyn Hittable>> {
     objects
 }
 
-fn ray_color(r: &Ray, objects: &mut Vec<Box<dyn Hittable>>, depth: i32) -> Color {
+fn ray_color(r: &Ray, objects: &mut dyn Hittable, depth: i32) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
         return Color::new();
     }
 
-    let mut closest_hit = f64::INFINITY;
-    let mut record = None;
-
-    for object in &mut *objects {
-        if let Some(rec) = object.hit(r, 0.001, closest_hit) {
-            closest_hit = rec.t;
-            record = Some(rec);
-        }
-    }
+    let record = objects.hit(r, 0.001, f64::INFINITY);
 
     match record {
         Some(rec) => match rec.mat.scatter(r, &rec) {
