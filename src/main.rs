@@ -5,17 +5,19 @@ use std::io::prelude::*;
 use std::io::BufWriter;
 use std::rc::Rc;
 
+use crate::aarect::Xyrect;
 use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
 use crate::hittable_list::HittableList;
-use crate::material::{Dielectric, Lambertian, Metal};
+use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::moving_sphere::MovingSphere;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::{Color, Point, Vec3};
 
 mod aabb;
+mod aarect;
 mod bvh;
 mod camera;
 mod color;
@@ -27,6 +29,7 @@ mod ray;
 mod sphere;
 mod vec3;
 
+#[allow(dead_code)]
 fn random_scene() -> HittableList {
     let mut objects = HittableList::new();
     let mut rng = thread_rng();
@@ -100,6 +103,38 @@ fn random_scene() -> HittableList {
     objects
 }
 
+#[allow(dead_code)]
+fn simple_ligth_scene() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let ground_material = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
+    objects.push(Rc::new(Sphere::from(
+        Point::from(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    let sphere_material = Rc::new(Metal::from(Color::from(0.8, 0.8, 0.8), 0.8));
+    objects.push(Rc::new(Sphere::from(
+        Point::from(0.0, 2.0, 0.0),
+        2.0,
+        sphere_material,
+    )));
+
+    // Note that the light is brighter than (1, 1, 1)
+    let light_material = Rc::new(DiffuseLight::from(Color::from(4.0, 4.0, 4.0)));
+    objects.push(Rc::new(Xyrect::from(
+        3.0,
+        5.0,
+        1.0,
+        3.0,
+        -2.0,
+        light_material,
+    )));
+
+    objects
+}
+
 fn ray_color(r: &Ray, background: Color, objects: &mut dyn Hittable, depth: i32) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
@@ -116,6 +151,7 @@ fn ray_color(r: &Ray, background: Color, objects: &mut dyn Hittable, depth: i32)
             }
             None => rec.mat.emitted(),
         },
+        // If the ray hits nothing, return the background color
         None => background,
     }
 }
@@ -129,11 +165,11 @@ fn main() -> io::Result<()> {
     let max_depth = 50;
 
     // World
-    let mut objects = random_scene();
+    let mut objects = simple_ligth_scene();
     let background = Color::new();
 
-    let lookfrom = Point::from(13.0, 2.0, 3.0);
-    let lookat = Point::from(0.0, 0.0, 0.0);
+    let lookfrom = Point::from(26.0, 3.0, 6.0);
+    let lookat = Point::from(0.0, 2.0, 0.0);
     let vup = Vec3::from(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
     let aperture = 0.1;
