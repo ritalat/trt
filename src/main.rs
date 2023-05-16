@@ -100,7 +100,7 @@ fn random_scene() -> HittableList {
     objects
 }
 
-fn ray_color(r: &Ray, objects: &mut dyn Hittable, depth: i32) -> Color {
+fn ray_color(r: &Ray, background: Color, objects: &mut dyn Hittable, depth: i32) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
         return Color::new();
@@ -111,15 +111,12 @@ fn ray_color(r: &Ray, objects: &mut dyn Hittable, depth: i32) -> Color {
     match record {
         Some(rec) => match rec.mat.scatter(r, &rec) {
             Some((attenuation, scattered)) => {
-                attenuation * ray_color(&scattered, objects, depth - 1)
+                rec.mat.emitted()
+                    + attenuation * ray_color(&scattered, background, objects, depth - 1)
             }
-            None => Color::new(),
+            None => rec.mat.emitted(),
         },
-        None => {
-            let unit_direction = vec3::unit_vector(r.dir);
-            let t = 0.5 * (unit_direction.y + 1.0);
-            (1.0 - t) * Color::from(1.0, 1.0, 1.0) + t * Color::from(0.5, 0.7, 1.0)
-        }
+        None => background,
     }
 }
 
@@ -133,6 +130,7 @@ fn main() -> io::Result<()> {
 
     // World
     let mut objects = random_scene();
+    let background = Color::new();
 
     let lookfrom = Point::from(13.0, 2.0, 3.0);
     let lookat = Point::from(0.0, 0.0, 0.0);
@@ -167,7 +165,7 @@ fn main() -> io::Result<()> {
                 let u = (i as f64 + random::<f64>()) / (image_width - 1) as f64;
                 let v = (j as f64 + random::<f64>()) / (image_height - 1) as f64;
                 let r = camera.get_ray(u, v);
-                pixel_color = pixel_color + ray_color(&r, &mut objects, max_depth);
+                pixel_color = pixel_color + ray_color(&r, background, &mut objects, max_depth);
             }
             write_color(&mut writer, pixel_color, samples_per_pixel)?;
         }

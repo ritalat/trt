@@ -6,6 +6,10 @@ use crate::vec3::{self, Color, Vec3};
 
 pub trait Material {
     fn scatter(&self, r: &Ray, rec: &HitRecord) -> Option<(Color, Ray)>;
+
+    fn emitted(&self) -> Color {
+        Color::new()
+    }
 }
 
 pub struct Lambertian {
@@ -127,5 +131,31 @@ impl Material for Dielectric {
 
         let scattered = Ray::from(rec.p, direction, r.t);
         Some((attenuation, scattered))
+    }
+}
+
+pub struct DiffuseLight {
+    pub emit: Color,
+}
+
+impl DiffuseLight {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        DiffuseLight { emit: Color::new() }
+    }
+
+    #[allow(dead_code)]
+    pub fn from(emit: Color) -> Self {
+        DiffuseLight { emit }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _: &Ray, _: &HitRecord) -> Option<(Color, Ray)> {
+        None
+    }
+
+    fn emitted(&self) -> Color {
+        self.emit
     }
 }
