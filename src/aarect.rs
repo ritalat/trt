@@ -90,7 +90,7 @@ impl Hittable for Xzrect {
             return None;
         }
         let p = r.at(t);
-        let outward_normal = Vec3::from(0.0, 0.0, 1.0);
+        let outward_normal = Vec3::from(0.0, 1.0, 0.0);
         Some(HitRecord::from(r, p, t, outward_normal, self.mat.clone()))
     }
 
@@ -139,7 +139,7 @@ impl Hittable for Yzrect {
             return None;
         }
         let p = r.at(t);
-        let outward_normal = Vec3::from(0.0, 0.0, 1.0);
+        let outward_normal = Vec3::from(1.0, 0.0, 0.0);
         Some(HitRecord::from(r, p, t, outward_normal, self.mat.clone()))
     }
 

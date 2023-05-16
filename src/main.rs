@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use std::io::BufWriter;
 use std::rc::Rc;
 
-use crate::aarect::Xyrect;
+use crate::aarect::{Xyrect, Xzrect, Yzrect};
 use crate::camera::Camera;
 use crate::color::write_color;
 use crate::hittable::Hittable;
@@ -104,7 +104,7 @@ fn random_scene() -> HittableList {
 }
 
 #[allow(dead_code)]
-fn simple_ligth_scene() -> HittableList {
+fn simple_light_scene() -> HittableList {
     let mut objects = HittableList::new();
 
     let ground_material = Rc::new(Lambertian::from(Color::from(0.8, 0.8, 0.0)));
@@ -135,6 +135,50 @@ fn simple_ligth_scene() -> HittableList {
     objects
 }
 
+#[allow(dead_code)]
+fn cornell_box_scene() -> HittableList {
+    let mut objects = HittableList::new();
+
+    // Cornell box
+    let red = Rc::new(Lambertian::from(Color::from(0.65, 0.05, 0.05)));
+    let white = Rc::new(Lambertian::from(Color::from(0.73, 0.73, 0.73)));
+    let green = Rc::new(Lambertian::from(Color::from(0.12, 0.54, 0.15)));
+    let light = Rc::new(DiffuseLight::from(Color::from(15.0, 15.0, 15.0)));
+
+    objects.push(Rc::new(Yzrect::from(0.0, 555.0, 0.0, 555.0, 555.0, green)));
+    objects.push(Rc::new(Yzrect::from(0.0, 555.0, 0.0, 555.0, 0.0, red)));
+    objects.push(Rc::new(Xzrect::from(
+        213.0, 343.0, 227.0, 332.0, 554.0, light,
+    )));
+    objects.push(Rc::new(Xzrect::from(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        white.clone(),
+    )));
+    objects.push(Rc::new(Xzrect::from(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    objects.push(Rc::new(Xyrect::from(0.0, 555.0, 0.0, 555.0, 555.0, white)));
+
+    // Objects
+    let metal = Rc::new(Metal::from(Color::from(0.8, 0.8, 0.8), 0.8));
+    objects.push(Rc::new(Sphere::from(
+        Point::from(277.5, 100.0, 277.5),
+        100.0,
+        metal,
+    )));
+
+    objects
+}
+
 fn ray_color(r: &Ray, background: Color, objects: &mut dyn Hittable, depth: i32) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered
     if depth <= 0 {
@@ -158,27 +202,27 @@ fn ray_color(r: &Ray, background: Color, objects: &mut dyn Hittable, depth: i32)
 
 fn main() -> io::Result<()> {
     // Image
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    let aspect_ratio = 1.0;
+    let image_width = 600;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 200;
     let max_depth = 50;
 
     // World
-    let mut objects = simple_ligth_scene();
+    let mut objects = cornell_box_scene();
     let background = Color::new();
 
-    let lookfrom = Point::from(26.0, 3.0, 6.0);
-    let lookat = Point::from(0.0, 2.0, 0.0);
+    let lookfrom = Point::from(278.0, 278.0, -800.0);
+    let lookat = Point::from(278.0, 278.0, 0.0);
     let vup = Vec3::from(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
 
     let camera = Camera::from(
         lookfrom,
         lookat,
         vup,
-        20.0,
+        40.0,
         aspect_ratio,
         aperture,
         dist_to_focus,
